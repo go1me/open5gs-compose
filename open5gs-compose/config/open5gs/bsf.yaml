@@ -1,0 +1,101 @@
+logger:
+  file: /var/local/log/open5gs/bsf.log
+#  level: info   # fatal|error|warn|info(default)|debug|trace
+
+global:
+  max:
+    ue: 1024  # The number of UE can be increased depending on memory size.
+#    peer: 64
+
+bsf:
+  sbi:
+    server:
+      - address: bsf.open5gs.org
+        port: 80
+    client:
+#      nrf:
+#        - uri: http://127.0.0.10:80
+      scp:
+        - uri: http://scp.open5gs.org:80
+
+################################################################################
+# SBI Server
+################################################################################
+#  o Override SBI address to be advertised to NRF
+#  sbi:
+#    server:
+#      - dev: eth0
+#        advertise: open5gs-bsf.svc.local
+#
+#  sbi:
+#    server:
+#      - address: localhost
+#        advertise:
+#          - 127.0.0.99
+#          - ::1
+#
+################################################################################
+# SBI Client
+################################################################################
+#  o Direct communication with NRF interaction
+#  sbi:
+#    client:
+#      nrf:
+#        - uri: http://127.0.0.10:80
+#
+#  o Indirect communication with delegated discovery
+#  sbi:
+#    client:
+#      scp:
+#        - uri: http://127.0.0.200:80
+#
+#  o Indirect communication without delegated discovery
+#  sbi:
+#    client:
+#      nrf:
+#        - uri: http://127.0.0.10:80
+#      scp:
+#        - uri: http://127.0.0.200:80
+#  discovery:
+#    delegated: no
+#
+################################################################################
+# HTTPS scheme with TLS
+################################################################################
+#  o Set as default if not individually set
+#  default:
+#    tls:
+#      server:
+#        scheme: https
+#        private_key: /usr/local/etc/open5gs/tls/bsf.key
+#        cert: /usr/local/etc/open5gs/tls/bsf.crt
+#      client:
+#        scheme: https
+#        cacert: /usr/local/etc/open5gs/tls/ca.crt
+#  sbi:
+#    server:
+#      - address: bsf.localdomain
+#    client:
+#      nrf:
+#        - uri: https://nrf.localdomain
+#
+#  o Add client TLS verification
+#  default:
+#    tls:
+#      server:
+#        scheme: https
+#        private_key: /usr/local/etc/open5gs/tls/bsf.key
+#        cert: /usr/local/etc/open5gs/tls/bsf.crt
+#        verify_client: true
+#        verify_client_cacert: /usr/local/etc/open5gs/tls/ca.crt
+#      client:
+#        scheme: https
+#        cacert: /usr/local/etc/open5gs/tls/ca.crt
+#        client_private_key: /usr/local/etc/open5gs/tls/bsf.key
+#        client_cert: /usr/local/etc/open5gs/tls/bsf.crt
+#  sbi:
+#    server:
+#      - address: bsf.localdomain
+#    client:
+#      nrf:
+#        - uri: https://nrf.localdomain

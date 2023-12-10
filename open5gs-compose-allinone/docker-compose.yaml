@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+
+  mongodb:
+    container_name: mongodb
+    image: mongo
+    #command: bash -c "mongosh open5gs /docker-entrypoint-initdb.d/mongo-init.js"
+    restart: unless-stopped
+    environment:
+      -MONGO_INITDB_DATABASE: open5gs
+    expose:
+      - "27017"
+    volumes:
+      - mongodb:/data/db
+      - ./docs/assets/webui/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      open5gsnet:
+        aliases:
+          - mongodb
+
+  
+
+  open5gs-core:
+    container_name: open5gs-core
+    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-build
+    command: bash -c "/root/setup.sh;sleep 20;/usr/local/bin/open5gs-nrfd -D;/usr/local/bin/open5gs-scpd -D;/usr/local/bin/open5gs-amfd -D;/usr/local/bin/open5gs-smfd -D;/usr/local/bin/open5gs-ausfd -D;/usr/local/bin/open5gs-udmd -D;/usr/local/bin/open5gs-udrd -D;/usr/local/bin/open5gs-nssfd -D;/usr/local/bin/open5gs-bsfd -D;/usr/local/bin/open5gs-pcfd -D; /usr/local/bin/open5gs-upfd;"
+    depends_on:
+      - mongodb
+      - open5gs-webui
+    expose:
+      - "38412"
+    volumes:
+      - ./config/open5gs:/usr/local/etc/open5gs
+      - ./config/freeDiameter:/usr/local/etc/freeDiameter
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - "/dev/net/tun:/dev/net/tun"
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+    environment:
+      #- DB_URI=mongodb://mongodb/open5gs
+      - WAIT_HOSTS=mongodb:27017
+    #ports:
+    #  - "38412:38412"
+    networks:
+      open5gsnet:
+        aliases:
+          - core.open5gs.org
+
+  open5gs-webui:
+    container_name: open5gs-webui
+    image: ${USER}/open5gs-webui
+    depends_on:
+      - mongodb
+    ports:
+      - "9999:9999"
+    environment:
+      - DB_URI=mongodb://mongodb/open5gs
+      - WAIT_HOSTS=mongodb:27017
+    networks:
+      open5gsnet:
+        aliases:
+          - webui.open5gs.org
+  ueransim:
+    container_name: ueransim
+    image: free5gc/ueransim:latest
+    command: bash -c "sleep 20; ./nr-gnb -c ./config/open5gs-gnb.yaml"
+    volumes:
+      - ./config/ueransim/open5gs-gnb.yaml:/ueransim/config/open5gs-gnb.yaml
+      - ./config/ueransim/open5gs-ue.yaml:/ueransim/config/open5gs-ue.yaml
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - "/dev/net/tun"
+    networks:
+      open5gsnet:
+        aliases:
+          - gnb.open5gs.org
+    depends_on:
+      - mongodb
+      - open5gs-core
+      - open5gs-webui
+
+
+networks:
+  open5gsnet:
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.200.0/24
+    driver_opts:
+      com.docker.network.bridge.name: br-open5gs
+
+volumes:
+  mongodb:
